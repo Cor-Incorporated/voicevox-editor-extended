@@ -30,9 +30,9 @@ async function getYomi(page: Page, inputText: string): Promise<string> {
 async function openDictDialog(page: Page): Promise<void> {
   await page.getByRole("button", { name: "設定" }).click();
   await page.waitForTimeout(100);
-  await page.getByText("読み方＆アクセント辞書").click();
+  await page.getByText("辞書管理").click();
   await page.waitForTimeout(500);
-  await expect(page.getByText("読み方＆アクセント辞書")).toBeVisible();
+  await expect(page.getByText("辞書管理")).toBeVisible();
   await expect(page.getByText("単語一覧")).toBeVisible();
 }
 
@@ -47,9 +47,7 @@ async function validateInputTag(
   expect(text).toBe(expectedWord);
 }
 
-test("「設定」→「読み方＆アクセント辞書」で「読み方＆アクセント辞書」ページが表示される", async ({
-  page,
-}) => {
+test("「設定」→「辞書管理」で辞書管理ページが表示される", async ({ page }) => {
   await navigateToMain(page);
 
   const targetString = "あいうえお";
@@ -114,7 +112,7 @@ test("「設定」→「読み方＆アクセント辞書」で「読み方＆�
   await page.waitForTimeout(100);
 
   await page
-    .locator("header", { hasText: "読み方＆アクセント辞書" })
+    .locator("header", { hasText: "辞書管理" })
     .filter({ hasText: "close" })
     .getByRole("button")
     .click();

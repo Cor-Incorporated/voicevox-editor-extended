@@ -10,9 +10,7 @@
       <QPageContainer>
         <QHeader class="q-pa-sm">
           <QToolbar>
-            <QToolbarTitle class="text-display">
-              辞書管理
-            </QToolbarTitle>
+            <QToolbarTitle class="text-display"> 辞書管理 </QToolbarTitle>
             <QSpace />
             <QBtn
               round

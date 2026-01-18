@@ -1010,9 +1010,12 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
         // 2. 拡張辞書を適用（サーバーが落ちていてもフォールバック）
         // Note: Editor内部(camelCase)とServer API(snake_case)で型が異なるため変換が必要
         try {
-          const queryForServer = AudioQueryToJSON(originalQuery);
+          // AudioQueryToJSON は any を返すが、AudioQueryForDict と互換性がある
+          const queryForServer = AudioQueryToJSON(
+            originalQuery,
+          ) as unknown as AudioQueryForDict;
           const result = await extendedDictApi.applyDictionary(
-            queryForServer as unknown as AudioQueryForDict,
+            queryForServer,
             text,
             styleId,
           );
@@ -1026,7 +1029,9 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
           return convertAudioQueryFromEngineToEditor(convertedQuery);
         } catch {
           // 拡張辞書サーバーが利用できない場合は元のQueryを使用
-          console.warn("Extended dictionary not available, using original query");
+          console.warn(
+            "Extended dictionary not available, using original query",
+          );
           return convertAudioQueryFromEngineToEditor(originalQuery);
         }
       } catch (error) {
@@ -2042,11 +2047,12 @@ export const audioCommandStore = transformCommandStore(
             // Note: Editor内部(camelCase)とServer API(snake_case)で型が異なるため as unknown as で変換
             try {
               const tempQuery = { ...query, accentPhrases: newAccentPhrases };
+              // AudioQueryToJSON は any を返すが、AudioQueryForDict と互換性がある
               const queryForServer = AudioQueryToJSON(
                 tempQuery as unknown as AudioQuery,
-              );
+              ) as unknown as AudioQueryForDict;
               const result = await extendedDictApi.applyDictionary(
-                queryForServer as unknown as AudioQueryForDict,
+                queryForServer,
                 skippedText,
                 styleId,
               );
@@ -2058,8 +2064,8 @@ export const audioCommandStore = transformCommandStore(
                 const serverResponse = result.audio_query as unknown as {
                   accent_phrases: unknown[];
                 };
-                newAccentPhrases = serverResponse.accent_phrases.map(
-                  (ap) => AccentPhraseFromJSON(ap) as AccentPhrase,
+                newAccentPhrases = serverResponse.accent_phrases.map((ap) =>
+                  AccentPhraseFromJSON(ap),
                 );
               }
             } catch {

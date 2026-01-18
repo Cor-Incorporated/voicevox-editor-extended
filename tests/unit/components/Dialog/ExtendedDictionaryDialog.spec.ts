@@ -1,3 +1,9 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/unbound-method */
+// @typescript-eslint/no-non-null-assertion: テストファイルでのボタン検索後の ! 演算子使用を許可
+//   expect().toBeDefined() で存在確認後に使用するため安全
+// @typescript-eslint/unbound-method: Vitest の vi.mocked() で作成したモック関数を
+//   expect(mockedApi.method).toHaveBeenCalled() で検証する際に必要
+
 import { mount, flushPromises } from "@vue/test-utils";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { nextTick } from "vue";
@@ -77,11 +83,17 @@ const mockSynthesizeDebugResponse: SynthesizeDebugResponse = {
   applied_entries: [],
 };
 
-// Quasar コンポーネントのスタブ
+// Quasar コンポーネントとカスタムコンポーネントのスタブ
 const stubComponents = {
   QDialog: {
     template: `<div class="q-dialog"><slot /></div>`,
     props: ["modelValue"],
+  },
+  // CharacterButton は store に依存するためスタブ化
+  CharacterButton: {
+    template: "<div class='character-button-stub'><slot /></div>",
+    props: ["characterInfos", "selectedVoice", "uiLocked"],
+    emits: ["update:selectedVoice"],
   },
   QLayout: { template: "<div><slot /></div>" },
   QPageContainer: { template: "<div><slot /></div>" },
@@ -92,9 +104,22 @@ const stubComponents = {
   QBtn: {
     template:
       '<button :disabled="disable" :data-icon="icon" @click="handleClick($event)"><slot />{{ icon ? icon : "" }}</button>',
-    props: ["disable", "loading", "outline", "round", "flat", "icon", "color", "size", "dense"],
+    props: [
+      "disable",
+      "loading",
+      "outline",
+      "round",
+      "flat",
+      "icon",
+      "color",
+      "size",
+      "dense",
+    ],
     emits: ["click"],
-    setup(_: unknown, { emit }: { emit: (event: string, ...args: unknown[]) => void }) {
+    setup(
+      _: unknown,
+      { emit }: { emit: (event: string, ...args: unknown[]) => void },
+    ) {
       return {
         handleClick(e: Event) {
           if (e && e.stopPropagation) {
@@ -255,6 +280,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const addButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("追加"));
+      expect(addButton).toBeDefined();
       await addButton!.trigger("click");
       await flushPromises();
 
@@ -267,6 +293,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const fetchButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("発音取得"));
+      expect(fetchButton).toBeDefined();
       await fetchButton!.trigger("click");
       await flushPromises();
 
@@ -302,6 +329,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const addButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("追加"));
+      expect(addButton).toBeDefined();
       await addButton!.trigger("click");
       await flushPromises();
 
@@ -314,6 +342,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const fetchButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("発音取得"));
+      expect(fetchButton).toBeDefined();
       await fetchButton!.trigger("click");
       await flushPromises();
 
@@ -338,6 +367,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const addButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("追加"));
+      expect(addButton).toBeDefined();
       await addButton!.trigger("click");
       await flushPromises();
 
@@ -348,6 +378,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const fetchButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("発音取得"));
+      expect(fetchButton).toBeDefined();
       await fetchButton!.trigger("click");
       await flushPromises();
 
@@ -358,11 +389,14 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const saveButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("保存"));
+      expect(saveButton).toBeDefined();
       await saveButton!.trigger("click");
       await flushPromises();
 
       // 保存後に再度getAll
-      expect(mockedApi.getAll.mock.calls.length).toBeGreaterThan(countBeforeSave);
+      expect(mockedApi.getAll.mock.calls.length).toBeGreaterThan(
+        countBeforeSave,
+      );
     });
   });
 
@@ -415,6 +449,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const addButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("追加"));
+      expect(addButton).toBeDefined();
       await addButton!.trigger("click");
       await flushPromises();
 
@@ -425,12 +460,14 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const fetchButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("発音取得"));
+      expect(fetchButton).toBeDefined();
       await fetchButton!.trigger("click");
       await flushPromises();
 
       const saveButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("保存"));
+      expect(saveButton).toBeDefined();
       await saveButton!.trigger("click");
       await flushPromises();
 
@@ -446,6 +483,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const addButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("追加"));
+      expect(addButton).toBeDefined();
       await addButton!.trigger("click");
       await flushPromises();
 
@@ -456,6 +494,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const fetchButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("発音取得"));
+      expect(fetchButton).toBeDefined();
       await fetchButton!.trigger("click");
       await flushPromises();
 
@@ -471,6 +510,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
       const addButton = wrapper
         .findAll("button")
         .find((b) => b.text().includes("追加"));
+      expect(addButton).toBeDefined();
       await addButton!.trigger("click");
       await flushPromises();
 
@@ -487,7 +527,7 @@ describe("ExtendedDictionaryDialog.vue", () => {
 
       // 「単語を選択するか」のプロンプトが表示される
       expect(wrapper.text()).toContain(
-        "単語を選択するか、「追加」ボタンを押してください"
+        "単語を選択するか、「追加」ボタンを押してください",
       );
     });
   });

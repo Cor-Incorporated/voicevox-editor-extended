@@ -63,7 +63,7 @@ export const extendedDictApi = {
     if (!response.ok) {
       throw new Error(`Failed to fetch dictionary: ${response.statusText}`);
     }
-    return response.json();
+    return (await response.json()) as ExtendedDictResponse;
   },
 
   /**
@@ -78,7 +78,7 @@ export const extendedDictApi = {
     if (!response.ok) {
       throw new Error(`Failed to create entry: ${response.statusText}`);
     }
-    return response.json();
+    return (await response.json()) as { message: string };
   },
 
   /**
@@ -87,12 +87,12 @@ export const extendedDictApi = {
   async delete(word: string): Promise<{ message: string }> {
     const response = await fetch(
       `${EXTENDED_DICT_API_BASE}/dictionary/${encodeURIComponent(word)}`,
-      { method: "DELETE" }
+      { method: "DELETE" },
     );
     if (!response.ok) {
       throw new Error(`Failed to delete entry: ${response.statusText}`);
     }
-    return response.json();
+    return (await response.json()) as { message: string };
   },
 
   /**
@@ -100,7 +100,7 @@ export const extendedDictApi = {
    */
   async synthesizeDebug(
     text: string,
-    speaker: number = 1
+    speaker: number = 1,
   ): Promise<SynthesizeDebugResponse> {
     const response = await fetch(`${EXTENDED_DICT_API_BASE}/synthesize/debug`, {
       method: "POST",
@@ -110,7 +110,7 @@ export const extendedDictApi = {
     if (!response.ok) {
       throw new Error(`Failed to synthesize: ${response.statusText}`);
     }
-    return response.json();
+    return (await response.json()) as SynthesizeDebugResponse;
   },
 
   /**
@@ -118,7 +118,7 @@ export const extendedDictApi = {
    */
   async synthesizePreview(
     audioQuery: AudioQueryForDict,
-    speaker: number = 1
+    speaker: number = 1,
   ): Promise<ArrayBuffer> {
     const response = await fetch(
       `${EXTENDED_DICT_API_BASE}/synthesize/preview`,
@@ -126,7 +126,7 @@ export const extendedDictApi = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ audio_query: audioQuery, speaker }),
-      }
+      },
     );
     if (!response.ok) {
       throw new Error(`Failed to preview: ${response.statusText}`);
@@ -145,7 +145,7 @@ export const extendedDictApi = {
   async applyDictionary(
     audioQuery: AudioQueryForDict,
     text: string,
-    speaker: number = 1
+    speaker: number = 1,
   ): Promise<{
     audio_query: AudioQueryForDict;
     matches_found: number;
@@ -158,11 +158,11 @@ export const extendedDictApi = {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ audio_query: audioQuery, text, speaker }),
-        }
+        },
       );
       if (!response.ok) {
         console.warn(
-          `Extended dictionary apply failed: ${response.statusText}, using original query`
+          `Extended dictionary apply failed: ${response.statusText}, using original query`,
         );
         return {
           audio_query: audioQuery,
@@ -170,7 +170,11 @@ export const extendedDictApi = {
           applied_entries: [],
         };
       }
-      return response.json();
+      return (await response.json()) as {
+        audio_query: AudioQueryForDict;
+        matches_found: number;
+        applied_entries: string[];
+      };
     } catch (e) {
       // サーバーが落ちている場合は元のAudioQueryを返す
       console.warn("Extended dictionary server not available:", e);

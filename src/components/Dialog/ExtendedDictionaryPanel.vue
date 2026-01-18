@@ -103,11 +103,7 @@
         <div v-if="moras.length > 0" class="form-group">
           <label>モーラ別調整</label>
           <div class="mora-grid">
-            <div
-              v-for="(mora, index) in moras"
-              :key="index"
-              class="mora-item"
-            >
+            <div v-for="(mora, index) in moras" :key="index" class="mora-item">
               <div class="mora-text">{{ mora.text }}</div>
               <div class="slider-group">
                 <span class="slider-label">
@@ -119,7 +115,7 @@
                   :max="7"
                   :step="0.01"
                   color="primary"
-                  @update:model-value="drawPitchCurve"
+                  @update:modelValue="drawPitchCurve"
                 />
               </div>
               <div class="slider-group">
@@ -143,8 +139,8 @@
           <label>プレビュー話者</label>
           <div class="row items-center q-gutter-sm">
             <CharacterButton
-              :characterInfos="characterInfos"
-              :selectedVoice="selectedVoice"
+              :characterInfos
+              :selectedVoice
               :uiLocked="loading"
               @update:selectedVoice="selectedVoice = $event"
             />
@@ -168,12 +164,7 @@
 
         <!-- 保存ボタン -->
         <div class="form-actions">
-          <QBtn
-            color="primary"
-            :loading="loading"
-            :disable="!canSave"
-            @click="saveEntry"
-          >
+          <QBtn color="primary" :loading :disable="!canSave" @click="saveEntry">
             保存
           </QBtn>
           <QBtn outline @click="cancelEdit">キャンセル</QBtn>
@@ -231,7 +222,7 @@ const currentStyleId = computed(() => {
 const editForm = ref({
   word: "",
   pronunciation: "",
-  pitch_values: [] as number[],  // 絶対値: VOICEVOXの値（通常3〜7程度）
+  pitch_values: [] as number[], // 絶対値: VOICEVOXの値（通常3〜7程度）
   length_values: [] as number[], // 絶対値: VOICEVOXの値（通常0.05〜0.5程度）
 });
 
@@ -241,7 +232,7 @@ const canSave = computed(
   () =>
     editForm.value.word.trim() &&
     editForm.value.pronunciation.trim() &&
-    editForm.value.pitch_values.length > 0
+    editForm.value.pitch_values.length > 0,
 );
 
 // パネルがマウントされたら辞書を読み込む＆デフォルト話者を設定
@@ -265,7 +256,7 @@ watch(selectedVoice, async (newVoice) => {
   try {
     const result = await extendedDictApi.synthesizeDebug(
       editForm.value.word,
-      currentStyleId.value
+      currentStyleId.value,
     );
     baseAudioQuery.value = result.modified_query;
   } catch (e) {
@@ -313,13 +304,16 @@ async function selectEntry(entry: ExtendedDictEntry) {
 
   // プレビュー用にAudioQueryを取得
   try {
-    const result = await extendedDictApi.synthesizeDebug(entry.word, currentStyleId.value);
+    const result = await extendedDictApi.synthesizeDebug(
+      entry.word,
+      currentStyleId.value,
+    );
     baseAudioQuery.value = result.modified_query;
   } catch (e) {
     console.warn("Failed to fetch AudioQuery for preview:", e);
   }
 
-  nextTick(() => drawPitchCurve());
+  void nextTick(() => drawPitchCurve());
 }
 
 function newEntry() {
@@ -354,10 +348,10 @@ function hasUnsavedChanges(): boolean {
     if (entry) {
       // pitch_values または length_values が変更されているかチェック
       const pitchChanged = editForm.value.pitch_values.some(
-        (v, i) => Math.abs(v - entry.pitch_values[i]) > 0.001
+        (v, i) => Math.abs(v - entry.pitch_values[i]) > 0.001,
       );
       const lengthChanged = editForm.value.length_values.some(
-        (v, i) => Math.abs(v - entry.length_values[i]) > 0.001
+        (v, i) => Math.abs(v - entry.length_values[i]) > 0.001,
       );
       return pitchChanged || lengthChanged;
     }
@@ -372,7 +366,7 @@ async function fetchPronunciation() {
   // 変更がある場合は確認ダイアログを表示
   if (hasUnsavedChanges()) {
     const confirmed = confirm(
-      "発音を再取得すると、現在の音高・長さの調整はリセットされます。\n続行しますか？"
+      "発音を再取得すると、現在の音高・長さの調整はリセットされます。\n続行しますか？",
     );
     if (!confirmed) return;
   }
@@ -380,7 +374,10 @@ async function fetchPronunciation() {
   loading.value = true;
   error.value = null;
   try {
-    const result = await extendedDictApi.synthesizeDebug(editForm.value.word, currentStyleId.value);
+    const result = await extendedDictApi.synthesizeDebug(
+      editForm.value.word,
+      currentStyleId.value,
+    );
     const query = result.modified_query;
     baseAudioQuery.value = query;
 
@@ -400,7 +397,7 @@ async function fetchPronunciation() {
     editForm.value.pitch_values = allMoras.map((m) => m.pitch);
     editForm.value.length_values = allMoras.map((m) => m.vowel_length);
 
-    nextTick(() => drawPitchCurve());
+    void nextTick(() => drawPitchCurve());
   } catch (e) {
     error.value = e instanceof Error ? e.message : "発音の取得に失敗";
   } finally {
@@ -431,8 +428,12 @@ async function saveEntry() {
       pronunciation: editForm.value.pronunciation.trim(),
       accent_type: 0,
       mora_count: editForm.value.pitch_values.length,
-      pitch_values: editForm.value.pitch_values.map(v => Math.round(v * 100) / 100),
-      length_values: editForm.value.length_values.map(v => Math.max(0.01, Math.round(v * 100) / 100)),
+      pitch_values: editForm.value.pitch_values.map(
+        (v) => Math.round(v * 100) / 100,
+      ),
+      length_values: editForm.value.length_values.map((v) =>
+        Math.max(0.01, Math.round(v * 100) / 100),
+      ),
       speaker_id: currentStyleId.value,
     };
     await extendedDictApi.create(entry);
@@ -469,7 +470,7 @@ async function playPreview() {
   try {
     // AudioQueryのコピーを作成し、絶対値で上書き
     const modified = JSON.parse(
-      JSON.stringify(baseAudioQuery.value)
+      JSON.stringify(baseAudioQuery.value),
     ) as AudioQueryForDict;
     let moraIndex = 0;
     for (const phrase of modified.accent_phrases) {
@@ -484,7 +485,10 @@ async function playPreview() {
       }
     }
 
-    const audioData = await extendedDictApi.synthesizePreview(modified, currentStyleId.value);
+    const audioData = await extendedDictApi.synthesizePreview(
+      modified,
+      currentStyleId.value,
+    );
     const audioContext = new AudioContext();
     const audioBuffer = await audioContext.decodeAudioData(audioData);
     const source = audioContext.createBufferSource();
@@ -504,7 +508,7 @@ function getSelectedCharacterName(): string {
   for (const charInfo of characterInfos.value) {
     if (charInfo.metas.speakerUuid === selectedVoice.value.speakerId) {
       const style = charInfo.metas.styles.find(
-        (s) => s.styleId === selectedVoice.value?.styleId
+        (s) => s.styleId === selectedVoice.value?.styleId,
       );
       if (style?.styleName) {
         return `${charInfo.metas.speakerName}（${style.styleName}）`;
@@ -576,7 +580,11 @@ function drawPitchCurve() {
       ctx.moveTo(x, y);
     } else {
       const prevX = getPointX(i - 1, width, padding);
-      const prevY = getPointY(editForm.value.pitch_values[i - 1], height, padding);
+      const prevY = getPointY(
+        editForm.value.pitch_values[i - 1],
+        height,
+        padding,
+      );
       const cpX = (prevX + x) / 2;
       ctx.bezierCurveTo(cpX, prevY, cpX, y, x, y);
     }
@@ -616,7 +624,11 @@ function getPointIndexAtPosition(x: number, y: number): number | null {
   const padding = 40;
   for (let i = 0; i < editForm.value.pitch_values.length; i++) {
     const px = getPointX(i, canvas.width, padding);
-    const py = getPointY(editForm.value.pitch_values[i], canvas.height, padding);
+    const py = getPointY(
+      editForm.value.pitch_values[i],
+      canvas.height,
+      padding,
+    );
     const distance = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
     if (distance <= 12) return i;
   }
@@ -630,13 +642,13 @@ function onCanvasMouseDown(e: MouseEvent) {
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
   const index = getPointIndexAtPosition(x, y);
-  if (index !== null) {
+  if (index != null) {
     draggingIndex.value = index;
   }
 }
 
 function onCanvasMouseMove(e: MouseEvent) {
-  if (draggingIndex.value === null) return;
+  if (draggingIndex.value == null) return;
   const canvas = pitchCanvas.value;
   if (!canvas) return;
 
@@ -644,12 +656,14 @@ function onCanvasMouseMove(e: MouseEvent) {
   const y = e.clientY - rect.top;
   const padding = 40;
   // キャンバス座標から 0〜1 に正規化し、-0.15〜0.15 の範囲に変換
-  const normalized = (canvas.height - padding - y) / (canvas.height - padding * 2);
+  const normalized =
+    (canvas.height - padding - y) / (canvas.height - padding * 2);
   const pitch = Math.max(
     PITCH_MIN,
-    Math.min(PITCH_MAX, PITCH_MIN + normalized * PITCH_RANGE)
+    Math.min(PITCH_MAX, PITCH_MIN + normalized * PITCH_RANGE),
   );
-  editForm.value.pitch_values[draggingIndex.value] = Math.round(pitch * 100) / 100;
+  editForm.value.pitch_values[draggingIndex.value] =
+    Math.round(pitch * 100) / 100;
   drawPitchCurve();
 }
 

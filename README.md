@@ -1,4 +1,7 @@
-# VOICEVOX
+# VOICEVOX Editor Extended
+
+> **Note**: これは [VOICEVOX Editor](https://github.com/VOICEVOX/voicevox) の拡張版です。
+> イントネーション辞書機能を追加しています。
 
 [![releases](https://img.shields.io/github/v/release/VOICEVOX/voicevox?label=Release)](https://github.com/VOICEVOX/voicevox/releases)
 [![build](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml/badge.svg)](https://github.com/VOICEVOX/voicevox/actions/workflows/build.yml)
@@ -10,6 +13,72 @@
 （エンジンは [VOICEVOX ENGINE](https://github.com/VOICEVOX/voicevox_engine/) 、
 コアは [VOICEVOX CORE](https://github.com/VOICEVOX/voicevox_core/) 、
 全体構成は [こちら](./docs/全体構成.md) に詳細があります。）
+
+## 拡張機能: イントネーション辞書
+
+この拡張版では、単語ごとにピッチ（高低）と長さ（モーラ長）を細かく調整できる**イントネーション辞書**機能を追加しています。
+
+### 主な機能
+
+- **モーラ別ピッチ調整**: 各モーラのピッチを個別に設定
+- **モーラ別長さ調整**: 各モーラの長さを個別に設定
+- **自動適用**: 登録した単語が入力テキストに含まれると自動的に辞書の設定が適用される
+- **統合辞書管理**: 従来の読み方辞書と新しいイントネーション辞書を「辞書管理」画面で一括管理
+
+### クイックスタート
+
+#### 1. バックエンドを起動
+
+```bash
+git clone https://github.com/Cor-Incorporated/voicevox-intonation-dict
+cd voicevox-intonation-dict
+docker compose up -d
+```
+
+これにより以下が起動します:
+- **VOICEVOX Engine**: `http://localhost:50021`
+- **Extension Server**: `http://localhost:8000`
+
+#### 2. Editor を起動
+
+**ビルド済みバイナリを使用する場合:**
+- [Releases](../../releases) から OS に合ったバイナリをダウンロード
+- Windows: `.exe` を実行
+- macOS: `.dmg` をマウントしてインストール（[署名回避手順](#macos-での署名回避)を参照）
+
+**ローカルでビルドする場合:**
+```bash
+# 依存関係のインストール
+pnpm install
+
+# 開発モードで起動
+pnpm run electron:serve
+```
+
+#### 3. 辞書を使用
+
+1. メニューから「設定」→「辞書管理」を開く
+2. 「イントネーション」タブを選択
+3. 「追加」ボタンで新しい単語を登録
+4. ピッチ・長さのスライダーで調整
+5. 「保存」で登録完了
+
+### macOS での署名回避
+
+macOS では、署名されていないアプリを開く際にセキュリティ警告が表示されます。
+以下の手順で回避できます:
+
+```bash
+# 1. 拡張属性を削除
+xattr -cr /Applications/VOICEVOX.app
+
+# 2. アドホック署名を適用
+codesign --force --deep -s - /Applications/VOICEVOX.app
+```
+
+または、システム環境設定 > セキュリティとプライバシー > 一般 から「このまま開く」を選択してください。
+
+---
 
 ## ユーザーの方へ
 
