@@ -36,10 +36,6 @@ test("音声パラメータ引き継ぎの設定", async ({ page }) => {
   // パラメータを引き継がないことの確認
   await page.locator(".audio-cell input").first().click();
   await page.getByRole("button").filter({ hasText: "add" }).click();
-  // 新しく追加されたアイテムを明示的に選択（Windows CI では必要）
-  await page.waitForTimeout(200);
-  await page.locator(".audio-cell input").last().click();
-  await page.waitForTimeout(100);
   await inputTag.waitFor();
   await validateValue(inputTag, "1.00");
 
