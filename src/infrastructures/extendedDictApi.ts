@@ -52,7 +52,9 @@ export interface MoraForDict {
   pitch: number;
 }
 
-const EXTENDED_DICT_API_BASE = "http://localhost:8000/api/v1";
+// Windows では localhost が IPv6 (::1) に解決される場合があり、接続が遅くなる可能性があるため
+// 明示的に IPv4 アドレスを使用
+const EXTENDED_DICT_API_BASE = "http://127.0.0.1:8000/api/v1";
 
 // サーバー接続タイムアウト（ミリ秒）
 // サーバーが起動していない場合に素早くフォールバックするため短めに設定
