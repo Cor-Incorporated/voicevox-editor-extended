@@ -54,6 +54,32 @@ export interface MoraForDict {
 
 const EXTENDED_DICT_API_BASE = "http://localhost:8000/api/v1";
 
+// サーバー接続タイムアウト（ミリ秒）
+// サーバーが起動していない場合に素早くフォールバックするため短めに設定
+const FETCH_TIMEOUT_MS = 1000;
+
+/**
+ * タイムアウト付きfetchを実行するヘルパー関数
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = FETCH_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export const extendedDictApi = {
   /**
    * 辞書一覧を取得
@@ -152,7 +178,7 @@ export const extendedDictApi = {
     applied_entries: string[];
   }> {
     try {
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${EXTENDED_DICT_API_BASE}/synthesize/apply`,
         {
           method: "POST",
