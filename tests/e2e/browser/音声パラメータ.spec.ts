@@ -37,7 +37,8 @@ test("音声パラメータ引き継ぎの設定", async ({ page }) => {
   await page.locator(".audio-cell input").first().click();
   await page.getByRole("button").filter({ hasText: "add" }).click();
   await inputTag.waitFor();
-  await validateValue(inputTag, "1.00");
+  // Windows CI では設定変更の反映に時間がかかるため、リトライ付きアサーションを使用
+  await expect(inputTag).toHaveValue("1.00", { timeout: 5000 });
 
   // スライダーからパラメータの変更ができるかどうかを確認
   const sliderThumbBox = await page
