@@ -30,6 +30,8 @@ test("音声パラメータ引き継ぎの設定", async ({ page }) => {
   await validateValue(inputTag, "0.50");
 
   await toggleSetting(page, "パラメータの引き継ぎ");
+  // 設定変更が反映されるまで待機（Windows CI では追加の待機が必要）
+  await page.waitForTimeout(500);
 
   // パラメータを引き継がないことの確認
   await page.locator(".audio-cell input").first().click();

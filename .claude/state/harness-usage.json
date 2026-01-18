@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updatedAt": "2026-01-18T06:51:54.097Z",
+  "updatedAt": "2026-01-18T07:03:02.883Z",
   "skills": {},
   "commands": {
     "work": {
@@ -16,9 +16,9 @@
   },
   "hooks": {
     "pretooluse-guard": {
-      "triggered": 5,
-      "blocked": 5,
-      "lastTriggered": "2026-01-18T06:51:54.097Z"
+      "triggered": 6,
+      "blocked": 6,
+      "lastTriggered": "2026-01-18T07:03:02.883Z"
     }
   }
 }

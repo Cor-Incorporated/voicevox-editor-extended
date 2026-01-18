@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-01-18T06:51:43Z",
-  "changed_file": "src/infrastructures/extendedDictApi.ts",
+  "timestamp": "2026-01-18T07:02:57Z",
+  "changed_file": "tests/e2e/browser/音声パラメータ.spec.ts",
   "test_command": "pytest",
   "related_test": "",
   "recommendation": "テストの実行を推奨します"
