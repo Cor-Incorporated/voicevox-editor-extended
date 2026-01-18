@@ -36,17 +36,20 @@ docker compose up -d
 ```
 
 これにより以下が起動します:
+
 - **VOICEVOX Engine**: `http://localhost:50021`
 - **Extension Server**: `http://localhost:8000`
 
 #### 2. Editor を起動
 
 **ビルド済みバイナリを使用する場合:**
+
 - [Releases](../../releases) から OS に合ったバイナリをダウンロード
 - Windows: `.exe` を実行
 - macOS: `.dmg` をマウントしてインストール（[署名回避手順](#macos-での署名回避)を参照）
 
 **ローカルでビルドする場合:**
+
 ```bash
 # 依存関係のインストール
 pnpm install

@@ -234,7 +234,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ### データフロー
 
-```
+```text
 [ExtendedDictionaryDialog.vue]
          ↓ ↑
          API呼び出し
@@ -252,7 +252,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ### コンポーネント構成
 
-```
+```text
 ExtendedDictionaryDialog.vue
 ├── 左側パネル
 │   ├── 単語一覧（QList）
@@ -316,6 +316,7 @@ ExtendedDictionaryDialog.vue
 **原因**: メニュー登録が正しくない可能性があります。
 
 **解決策**:
+
 1. `src/components/Menu/MenuBar/useCommonMenuBarData.ts` の 360〜369行目を確認
 2. ブラウザの開発者ツールでコンソールエラーを確認
 3. `pnpm browser:serve` を再起動
@@ -325,12 +326,16 @@ ExtendedDictionaryDialog.vue
 **原因**: バックエンドサーバーが起動していない、またはポート8000が塞がれています。
 
 **解決策**:
+
 1. バックエンドサーバーが起動しているか確認:
+
    ```bash
    curl http://localhost:8000/api/v1/dictionary/
    ```
+
 2. レスポンスが返ってくるか確認
 3. サーバーが起動していない場合は起動:
+
    ```bash
    cd /path/to/voicevox-intonation-dict
    uvicorn main:app --reload --port 8000
@@ -339,10 +344,12 @@ ExtendedDictionaryDialog.vue
 ### 問題: プレビュー再生ができない
 
 **原因**:
+
 - バックエンドが WAV データを返していない
 - ブラウザの自動再生ポリシーに引っかかっている
 
 **解決策**:
+
 1. 開発者ツールのネットワークタブで `/api/v1/synthesize/preview` のレスポンスを確認
 2. `Content-Type: audio/wav` が返ってきているか確認
 3. ブラウザで音声再生を許可（初回クリック後に再生されることを確認）
@@ -371,6 +378,7 @@ app.add_middleware(
 **原因**: 辞書データが存在しない、またはAPI呼び出しが失敗しています。
 
 **解決策**:
+
 1. ブラウザの開発者ツールでネットワークタブを確認
 2. `/api/v1/dictionary/` のレスポンスを確認
 3. サンプルデータを手動で追加してテスト
@@ -380,6 +388,7 @@ app.add_middleware(
 **原因**: `splitIntoMoras` 関数の実装が簡易的なため、一部のカタカナ表記に対応していません。
 
 **解決策**:
+
 - 発音を正確なカタカナで入力（例: `ズンダモン` ではなく `ズンダモン`）
 - 必要に応じて `splitIntoMoras` 関数を改良（行552-566）
 
