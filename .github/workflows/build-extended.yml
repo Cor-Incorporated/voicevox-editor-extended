@@ -91,6 +91,21 @@ jobs:
           echo "This build does not include VOICEVOX Engine." > dummy_engine/README.txt
           echo "Please use Docker Compose to run the backend." >> dummy_engine/README.txt
 
+      # .env.production を修正して Engine 起動を無効化
+      - name: Disable engine execution in .env.production
+        run: |
+          # executionEnabled を false に変更
+          node -e "
+            const fs = require('fs');
+            let content = fs.readFileSync('.env.production', 'utf8');
+            content = content.replace(
+              /\"executionEnabled\":\\s*true/g,
+              '\"executionEnabled\": false'
+            );
+            fs.writeFileSync('.env.production', content);
+            console.log('Patched .env.production: executionEnabled -> false');
+          "
+
       # electronBuilderConfig.ts を修正して Engine のコピーをスキップ
       - name: Patch electron-builder config for no-engine build
         run: |
