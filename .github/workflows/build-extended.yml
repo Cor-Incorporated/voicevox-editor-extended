@@ -1,0 +1,193 @@
+# VOICEVOX Editor Extended - ビルドワークフロー
+# Engine をバンドルしない軽量版ビルド（外部ミドルウェア方式）
+
+name: Build Extended Editor
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "バージョン（例: 1.0.0）"
+        required: true
+        default: "1.0.0"
+
+env:
+  VOICEVOX_EDITOR_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || github.event.inputs.version || '1.0.0-dev' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows x64
+          - os: windows-2022
+            artifact_name: windows-x64
+            target: nsis-web
+          # macOS x64 (Intel)
+          - os: macos-13
+            artifact_name: macos-x64
+            target: dmg
+          # macOS ARM64 (Apple Silicon)
+          - os: macos-14
+            artifact_name: macos-arm64
+            target: dmg
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".node-version"
+          cache: "pnpm"
+
+      - name: Install GNU sed (macOS)
+        if: startsWith(matrix.os, 'macos-')
+        run: brew install gnu-sed
+
+      - name: Set sed command
+        id: sed
+        run: |
+          if [[ "${{ matrix.os }}" == macos-* ]]; then
+            echo "cmd=gsed" >> $GITHUB_OUTPUT
+          else
+            echo "cmd=sed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update version in package.json
+        run: |
+          ${{ steps.sed.outputs.cmd }} -i 's/"version": "999.999.999"/"version": "${{ env.VOICEVOX_EDITOR_VERSION }}"/' package.json
+
+      - name: Update package name
+        run: |
+          ${{ steps.sed.outputs.cmd }} -i 's/"name": "voicevox"/"name": "voicevox-extended"/' package.json
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate licenses
+        run: pnpm run license:generate -o public/licenses.json
+
+      # Engine をバンドルしないための設定
+      - name: Create dummy engine directory with placeholder
+        run: |
+          mkdir -p dummy_engine
+          echo "This build does not include VOICEVOX Engine." > dummy_engine/README.txt
+          echo "Please use Docker Compose to run the backend." >> dummy_engine/README.txt
+
+      # electronBuilderConfig.ts を修正して Engine のコピーをスキップ
+      - name: Patch electron-builder config for no-engine build
+        run: |
+          # Node.js で extraFiles から vv-engine エントリを削除
+          node -e "
+            const fs = require('fs');
+            const path = 'build/electronBuilderConfig.ts';
+            let content = fs.readFileSync(path, 'utf8');
+            // VOICEVOX_ENGINE_DIR を使用する extraFiles エントリを削除
+            content = content.replace(
+              /\\{\\s*from:\\s*VOICEVOX_ENGINE_DIR,\\s*to:\\s*path\\.join\\(extraFilePrefix,\\s*['\"]vv-engine['\"]\\),?\\s*\\},?/g,
+              ''
+            );
+            fs.writeFileSync(path, content);
+            console.log('Patched electronBuilderConfig.ts to remove Engine bundling');
+          "
+
+      - name: Build Electron
+        env:
+          VOICEVOX_ENGINE_DIR: ./dummy_engine
+          USE_HARD_LINKS: false
+        run: pnpm run electron:build
+
+      - name: Ad hoc code signing (macOS)
+        if: startsWith(matrix.os, 'macos-')
+        run: |
+          if [ -d "dist_electron/mac" ]; then
+            codesign --force --deep -s - dist_electron/mac/*.app || true
+          fi
+          if [ -d "dist_electron/mac-arm64" ]; then
+            codesign --force --deep -s - dist_electron/mac-arm64/*.app || true
+          fi
+
+      # Artifacts のアップロード
+      - name: Upload Windows artifacts
+        if: matrix.target == 'nsis-web'
+        uses: actions/upload-artifact@v4
+        with:
+          name: voicevox-extended-${{ matrix.artifact_name }}
+          path: |
+            dist_electron/nsis-web/*.exe
+            dist_electron/nsis-web/out/*.7z*
+
+      - name: Upload macOS artifacts
+        if: matrix.target == 'dmg'
+        uses: actions/upload-artifact@v4
+        with:
+          name: voicevox-extended-${{ matrix.artifact_name }}
+          path: dist_electron/*.dmg
+
+  # リリース作成（タグプッシュ時のみ）
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: VOICEVOX Editor Extended ${{ github.ref_name }}
+          draft: true
+          prerelease: false
+          files: |
+            artifacts/**/*.exe
+            artifacts/**/*.7z*
+            artifacts/**/*.dmg
+          body: |
+            ## VOICEVOX Editor Extended ${{ github.ref_name }}
+
+            拡張辞書機能を搭載した VOICEVOX Editor です。
+
+            ### インストール方法
+
+            1. **バックエンドを起動**
+               ```bash
+               git clone https://github.com/Cor-Incorporated/voicevox-intonation-dict
+               cd voicevox-intonation-dict
+               docker compose up -d
+               ```
+
+            2. **Editor をダウンロード**
+               - Windows: `.exe` ファイルをダウンロードして実行
+               - macOS: `.dmg` ファイルをダウンロードしてインストール
+
+            3. **Editor を起動**
+               - 拡張辞書ダイアログ（設定メニュー）から辞書を編集できます
+
+            ### 注意事項
+
+            - このビルドには VOICEVOX Engine が含まれていません
+            - Docker Compose でバックエンド（Engine + Extension Server）を起動してください
