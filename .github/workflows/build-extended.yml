@@ -72,7 +72,11 @@ jobs:
 
       - name: Update version in package.json
         run: |
-          ${{ steps.sed.outputs.cmd }} -i 's/"version": "999.999.999"/"version": "${{ env.VOICEVOX_EDITOR_VERSION }}"/' package.json
+          # Remove 'v' prefix if present (e.g., v1.0.0 -> 1.0.0)
+          VERSION="${{ env.VOICEVOX_EDITOR_VERSION }}"
+          VERSION="${VERSION#v}"
+          ${{ steps.sed.outputs.cmd }} -i 's/"version": "999.999.999"/"version": "'"$VERSION"'"/' package.json
+          echo "Set version to: $VERSION"
 
       - name: Update package name
         run: |
