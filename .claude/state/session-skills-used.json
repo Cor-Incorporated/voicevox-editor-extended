@@ -1,0 +1,8 @@
+{
+  "used": [
+    "claude-code-harness:setup",
+    "claude-code-harness:impl"
+  ],
+  "session_start": "2026-01-17T07:24:40Z",
+  "last_used": "2026-01-17T10:26:19Z"
+}

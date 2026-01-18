@@ -28,6 +28,12 @@
   <DictionaryManageDialog
     v-model:dialogOpened="isDictionaryManageDialogOpenComputed"
   />
+  <ExtendedDictionaryDialog
+    v-model:dialogOpened="isExtendedDictionaryDialogOpenComputed"
+  />
+  <UnifiedDictionaryDialog
+    v-model:dialogOpened="isUnifiedDictionaryDialogOpenComputed"
+  />
   <EngineManageDialog v-model:dialogOpened="isEngineManageDialogOpenComputed" />
   <UpdateNotificationDialogContainer
     :canOpenDialog="canOpenNotificationDialog"
@@ -49,6 +55,8 @@ import CharacterOrderDialog from "@/components/Dialog/OldCharacterOrderDialog.vu
 import AcceptRetrieveTelemetryDialog from "@/components/Dialog/AcceptDialog/AcceptRetrieveTelemetryDialog.vue";
 import AcceptTermsDialog from "@/components/Dialog/AcceptDialog/AcceptTermsDialog.vue";
 import DictionaryManageDialog from "@/components/Dialog/DictionaryManageDialog.vue";
+import ExtendedDictionaryDialog from "@/components/Dialog/ExtendedDictionaryDialog.vue";
+import UnifiedDictionaryDialog from "@/components/Dialog/UnifiedDictionaryDialog.vue";
 import EngineManageDialog from "@/components/Dialog/EngineManageDialog.vue";
 import UpdateNotificationDialogContainer from "@/components/Dialog/UpdateNotificationDialog/Container.vue";
 import ImportSongProjectDialog from "@/components/Dialog/ImportSongProjectDialog.vue";
@@ -57,6 +65,15 @@ import PresetManageDialog from "@/components/Dialog/PresetManageDialog.vue";
 import HelpDialog from "@/components/Dialog/HelpDialog/HelpDialog.vue";
 import { useStore } from "@/store";
 import { filterCharacterInfosByStyleType } from "@/store/utility";
+
+// 拡張辞書ダイアログ
+const isExtendedDictionaryDialogOpenComputed = computed({
+  get: () => store.state.isExtendedDictionaryDialogOpen,
+  set: (val) =>
+    store.actions.SET_DIALOG_OPEN({
+      isExtendedDictionaryDialogOpen: val,
+    }),
+});
 
 const props = defineProps<{
   isEnginesReady: boolean;
@@ -152,6 +169,15 @@ const isDictionaryManageDialogOpenComputed = computed({
   set: (val) =>
     store.actions.SET_DIALOG_OPEN({
       isDictionaryManageDialogOpen: val,
+    }),
+});
+
+// 統合辞書ダイアログ
+const isUnifiedDictionaryDialogOpenComputed = computed({
+  get: () => store.state.isUnifiedDictionaryDialogOpen,
+  set: (val) =>
+    store.actions.SET_DIALOG_OPEN({
+      isUnifiedDictionaryDialogOpen: val,
     }),
 });
 

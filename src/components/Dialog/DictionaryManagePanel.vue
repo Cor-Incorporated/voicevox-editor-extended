@@ -1,130 +1,101 @@
 <template>
-  <QDialog
-    v-model="dialogOpened"
-    maximized
-    transitionShow="jump-up"
-    transitionHide="jump-down"
-    class="setting-dialog transparent-backdrop"
-  >
-    <QLayout container view="hHh Lpr fFf" class="bg-background">
-      <QPageContainer>
-        <QHeader class="q-pa-sm">
-          <QToolbar>
-            <QToolbarTitle class="text-display"
-              >読み方＆アクセント辞書</QToolbarTitle
-            >
-            <QSpace />
-            <!-- close button -->
-            <QBtn
-              round
-              flat
-              icon="close"
-              color="display"
-              :disable="wordEditing"
-              @click="discardOrNotDialog(closeDialog)"
-            />
-          </QToolbar>
-        </QHeader>
-        <QPage class="row">
-          <div v-if="loadingDictState" class="loading-dict">
-            <div>
-              <QSpinner color="primary" size="2.5rem" />
-              <div class="q-mt-xs">
-                <template v-if="loadingDictState === 'loading'"
-                  >読み込み中・・・</template
-                >
-                <template v-if="loadingDictState === 'synchronizing'"
-                  >同期中・・・</template
-                >
-              </div>
-            </div>
-          </div>
-          <div class="col-4 word-list-col">
-            <div
-              v-if="wordEditing"
-              class="word-list-disable-overlay"
-              @click="discardOrNotDialog(cancel)"
-            />
-            <div class="word-list-header text-no-wrap">
-              <div class="row word-list-title">
-                <span class="text-h5 col-8">単語一覧</span>
-                <QBtn
-                  outline
-                  textColor="display"
-                  class="text-no-wrap text-bold col"
-                  :disable="uiLocked"
-                  @click="newWord"
-                  >追加</QBtn
-                >
-              </div>
-            </div>
-            <QList class="word-list">
-              <QItem
-                v-for="(value, key) in userDict"
-                :key
-                v-ripple
-                tag="label"
-                clickable
-                :active="selectedId === key"
-                activeClass="active-word"
-                @click="selectWord(key)"
-                @dblclick="editWord"
-                @mouseover="hoveredKey = key"
-                @mouseleave="hoveredKey = undefined"
+  <div class="dictionary-manage-panel row">
+    <div v-if="loadingDictState" class="loading-dict">
+      <div>
+        <QSpinner color="primary" size="2.5rem" />
+        <div class="q-mt-xs">
+          <template v-if="loadingDictState === 'loading'"
+            >読み込み中・・・</template
+          >
+          <template v-if="loadingDictState === 'synchronizing'"
+            >同期中・・・</template
+          >
+        </div>
+      </div>
+    </div>
+    <div class="col-4 word-list-col">
+      <div
+        v-if="wordEditing"
+        class="word-list-disable-overlay"
+        @click="discardOrNotDialog(cancel)"
+      />
+      <div class="word-list-header text-no-wrap">
+        <div class="row word-list-title">
+          <span class="text-h5 col-8">単語一覧</span>
+          <QBtn
+            outline
+            textColor="display"
+            class="text-no-wrap text-bold col"
+            :disable="uiLocked"
+            @click="newWord"
+            >追加</QBtn
+          >
+        </div>
+      </div>
+      <QList class="word-list">
+        <QItem
+          v-for="(value, key) in userDict"
+          :key
+          v-ripple
+          tag="label"
+          clickable
+          :active="selectedId === key"
+          activeClass="active-word"
+          @click="selectWord(key)"
+          @dblclick="editWord"
+          @mouseover="hoveredKey = key"
+          @mouseleave="hoveredKey = undefined"
+        >
+          <QItemSection>
+            <QItemLabel lines="1" class="text-display">{{
+              value.surface
+            }}</QItemLabel>
+            <QItemLabel lines="1" caption>{{ value.yomi }}</QItemLabel>
+          </QItemSection>
+
+          <QItemSection
+            v-if="!uiLocked && (hoveredKey === key || selectedId === key)"
+            side
+          >
+            <div class="q-gutter-xs">
+              <QBtn
+                size="12px"
+                flat
+                dense
+                round
+                icon="edit"
+                @click.stop="
+                  selectWord(key);
+                  editWord();
+                "
               >
-                <QItemSection>
-                  <QItemLabel lines="1" class="text-display">{{
-                    value.surface
-                  }}</QItemLabel>
-                  <QItemLabel lines="1" caption>{{ value.yomi }}</QItemLabel>
-                </QItemSection>
+                <QTooltip :delay="500">編集</QTooltip>
+              </QBtn>
+              <QBtn
+                size="12px"
+                flat
+                dense
+                round
+                icon="delete_outline"
+                @click.stop="
+                  selectWord(key);
+                  deleteWord();
+                "
+              >
+                <QTooltip :delay="500">削除</QTooltip>
+              </QBtn>
+            </div>
+          </QItemSection>
+        </QItem>
+      </QList>
+    </div>
 
-                <QItemSection
-                  v-if="!uiLocked && (hoveredKey === key || selectedId === key)"
-                  side
-                >
-                  <div class="q-gutter-xs">
-                    <QBtn
-                      size="12px"
-                      flat
-                      dense
-                      round
-                      icon="edit"
-                      @click.stop="
-                        selectWord(key);
-                        editWord();
-                      "
-                    >
-                      <QTooltip :delay="500">編集</QTooltip>
-                    </QBtn>
-                    <QBtn
-                      size="12px"
-                      flat
-                      dense
-                      round
-                      icon="delete_outline"
-                      @click.stop="
-                        selectWord(key);
-                        deleteWord();
-                      "
-                    >
-                      <QTooltip :delay="500">削除</QTooltip>
-                    </QBtn>
-                  </div>
-                </QItemSection>
-              </QItem>
-            </QList>
-          </div>
-
-          <DictionaryEditWordDialog />
-        </QPage>
-      </QPageContainer>
-    </QLayout>
-  </QDialog>
+    <DictionaryEditWordDialog />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, provide } from "vue";
+import { computed, ref, onMounted, provide } from "vue";
 import { QInput } from "quasar";
 import DictionaryEditWordDialog from "./DictionaryEditWordDialog.vue";
 import { dictionaryManageDialogContextKey } from "./dictionaryContext";
@@ -138,15 +109,10 @@ import {
 
 const defaultDictPriority = 5;
 
-const dialogOpened = defineModel<boolean>("dialogOpened", { default: false });
-
 const store = useStore();
 
-const uiLocked = ref(false); // ダイアログ内でstore.getters.UI_LOCKEDは常にtrueなので独自に管理
-
-// word-list の要素のうち、どの要素がホバーされているか
+const uiLocked = ref(false);
 const hoveredKey = ref<string | undefined>(undefined);
-
 const loadingDictState = ref<null | "loading" | "synchronizing">("loading");
 const userDict = ref<Record<string, UserDictWord>>({});
 
@@ -167,13 +133,10 @@ const loadingDictProcess = async () => {
       store.actions.LOAD_ALL_USER_DICT(),
     );
   } catch {
-    const result = await store.actions.SHOW_ALERT_DIALOG({
+    await store.actions.SHOW_ALERT_DIALOG({
       title: "辞書の取得に失敗しました",
       message: "エンジンの再起動をお試しください。",
     });
-    if (result === "OK") {
-      dialogOpened.value = false;
-    }
   }
   loadingDictState.value = "synchronizing";
   try {
@@ -186,11 +149,10 @@ const loadingDictProcess = async () => {
   }
   loadingDictState.value = null;
 };
-watch(dialogOpened, async (newValue) => {
-  if (newValue) {
-    await loadingDictProcess();
-    toInitialState();
-  }
+
+onMounted(async () => {
+  await loadingDictProcess();
+  toInitialState();
 });
 
 const wordEditing = ref(false);
@@ -219,11 +181,7 @@ const accentPhrase = ref<AccentPhrase | undefined>();
 const setYomi = async (text: string, changeWord?: boolean) => {
   const { engineId, styleId } = voiceComputed.value;
 
-  // テキスト長が0の時にエラー表示にならないように、テキスト長を考慮する
   isOnlyHiraOrKana.value = !text.length || kanaRegex.test(text);
-  // 読みが変更されていない場合は、アクセントフレーズに変更を加えない
-  // ただし、読みが同じで違う単語が存在する場合が考えられるので、changeWordフラグを考慮する
-  // 「ガ」が自動挿入されるので、それを考慮してsliceしている
   if (
     text ==
       accentPhrase.value?.moras
@@ -256,17 +214,13 @@ const setYomi = async (text: string, changeWord?: boolean) => {
   yomi.value = text;
 };
 
-// accent phraseにあるaccentと実際に登録するアクセントには差が生まれる
-// アクセントが自動追加される「ガ」に指定されている場合、
-// 実際に登録するaccentの値は0となるので、そうなるように処理する
 const computeRegisteredAccent = () => {
   if (!accentPhrase.value) throw new Error();
   let accent = accentPhrase.value.accent;
   accent = accent === accentPhrase.value.moras.length ? 0 : accent;
   return accent;
 };
-// computeの逆
-// 辞書から得たaccentが0の場合に、自動で追加される「ガ」の位置にアクセントを表示させるように処理する
+
 const computeDisplayAccent = () => {
   if (!accentPhrase.value || !selectedId.value) throw new Error();
   let accent = userDict.value[selectedId.value].accentType;
@@ -276,14 +230,12 @@ const computeDisplayAccent = () => {
 
 const wordPriority = ref(defaultDictPriority);
 
-// 操作（ステートの移動）
 const isWordChanged = computed(() => {
   if (selectedId.value === "") {
     return (
       surface.value != "" && yomi.value != "" && accentPhrase.value != undefined
     );
   }
-  // 一旦代入することで、userDictそのものが更新された時もcomputedするようにする
   const dict = userDict.value;
   const dictData = dict[selectedId.value];
   return (
@@ -321,6 +273,7 @@ const deleteWord = async () => {
     toInitialState();
   }
 };
+
 const discardOrNotDialog = async (okCallback: () => void) => {
   if (isWordChanged.value) {
     const result = await store.actions.SHOW_WARNING_DIALOG({
@@ -337,6 +290,7 @@ const discardOrNotDialog = async (okCallback: () => void) => {
     okCallback();
   }
 };
+
 const newWord = () => {
   selectedId.value = "";
   surface.value = "";
@@ -344,9 +298,11 @@ const newWord = () => {
   wordPriority.value = defaultDictPriority;
   editWord();
 };
+
 const editWord = () => {
   toWordEditingState();
 };
+
 const selectWord = (id: string) => {
   selectedId.value = id;
   surface.value = userDict.value[id].surface;
@@ -354,15 +310,11 @@ const selectWord = (id: string) => {
   wordPriority.value = userDict.value[id].priority;
   toWordSelectedState();
 };
+
 const cancel = () => {
   toInitialState();
 };
-const closeDialog = () => {
-  toDialogClosedState();
-};
 
-// ステートの移動
-// 初期状態
 const toInitialState = () => {
   wordEditing.value = false;
   selectedId.value = "";
@@ -370,18 +322,14 @@ const toInitialState = () => {
   void setYomi("");
   wordPriority.value = defaultDictPriority;
 };
-// 単語が選択されているだけの状態
+
 const toWordSelectedState = () => {
   wordEditing.value = false;
 };
-// 単語が編集されている状態
+
 const toWordEditingState = () => {
   wordEditing.value = true;
   surfaceInput.value?.focus();
-};
-// ダイアログが閉じている状態
-const toDialogClosedState = () => {
-  dialogOpened.value = false;
 };
 
 provide(dictionaryManageDialogContextKey, {
@@ -412,15 +360,20 @@ provide(dictionaryManageDialogContextKey, {
 @use "@/styles/colors" as colors;
 @use "@/styles/variables" as vars;
 
+.dictionary-manage-panel {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
 .word-list-col {
   border-right: solid 1px colors.$surface;
-  position: relative; // オーバーレイのため
+  position: relative;
   overflow-x: hidden;
 }
 
 .word-list-header {
   margin: 1rem;
-
   gap: 0.5rem;
   align-items: center;
   justify-content: space-between;
@@ -430,12 +383,7 @@ provide(dictionaryManageDialogContextKey, {
 }
 
 .word-list {
-  // menubar-height + toolbar-height + window-border-width +
-  // 36(title & buttons) + 30(margin 15x2)
-  height: calc(
-    100vh - #{vars.$menubar-height + vars.$toolbar-height +
-      vars.$window-border-width + 36px + 30px}
-  );
+  height: calc(100vh - 200px);
   width: 100%;
   overflow-y: auto;
   padding-bottom: 16px;

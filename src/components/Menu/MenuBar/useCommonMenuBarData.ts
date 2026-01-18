@@ -349,10 +349,10 @@ export const useCommonMenuBarData = (store: Store) => {
         },
         {
           type: "button",
-          label: "読み方＆アクセント辞書",
+          label: "辞書管理",
           onClick() {
             void store.actions.SET_DIALOG_OPEN({
-              isDictionaryManageDialogOpen: true,
+              isUnifiedDictionaryDialogOpen: true,
             });
           },
           disableWhenUiLocked: true,

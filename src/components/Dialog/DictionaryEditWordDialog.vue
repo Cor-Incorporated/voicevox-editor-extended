@@ -163,7 +163,7 @@
 <script setup lang="ts">
 import { inject, ref } from "vue";
 import { QInput } from "quasar";
-import { dictionaryManageDialogContextKey } from "./DictionaryManageDialog.vue";
+import { dictionaryManageDialogContextKey } from "./dictionaryContext";
 import AudioAccent from "@/components/Talk/AudioAccent.vue";
 import ContextMenu from "@/components/Menu/ContextMenu/Container.vue";
 import { useRightClickContextMenu } from "@/composables/useRightClickContextMenu";

@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "updatedAt": "2026-01-17T15:30:45.230Z",
+  "skills": {},
+  "commands": {
+    "work": {
+      "count": 3,
+      "lastUsed": "2026-01-17T15:30:45.229Z"
+    }
+  },
+  "agents": {
+    "technical-writer": {
+      "count": 1,
+      "lastUsed": "2026-01-17T10:27:10.286Z"
+    }
+  },
+  "hooks": {}
+}

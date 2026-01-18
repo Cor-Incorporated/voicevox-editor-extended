@@ -55,7 +55,15 @@ import {
   StyleInfo,
   Voice,
 } from "@/type/preload";
-import { AudioQuery, AccentPhrase, Speaker, SpeakerInfo } from "@/openapi";
+import {
+  AudioQuery,
+  AccentPhrase,
+  Speaker,
+  SpeakerInfo,
+  AudioQueryFromJSON,
+  AccentPhraseFromJSON,
+  AudioQueryToJSON,
+} from "@/openapi";
 import { base64ImageToUri, base64ToUri } from "@/helpers/base64Helper";
 import { getValueOrThrow, ResultError } from "@/type/result";
 import { generateWriteErrorMessage } from "@/helpers/fileHelper";
@@ -65,6 +73,10 @@ import { UnreachableError } from "@/type/utility";
 import { errorToMessage } from "@/helpers/errorHelper";
 import path from "@/helpers/path";
 import { generateTextFileData } from "@/helpers/fileDataGenerator";
+import {
+  extendedDictApi,
+  type AudioQueryForDict,
+} from "@/infrastructures/extendedDictApi";
 
 function generateAudioKey() {
   return AudioKey(uuid4());
@@ -973,7 +985,7 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
   },
 
   FETCH_AUDIO_QUERY: {
-    action(
+    async action(
       { state, actions },
       {
         text,
@@ -981,28 +993,49 @@ export const audioStore = createPartialStore<AudioStoreTypes>({
         styleId,
       }: { text: string; engineId: EngineId; styleId: StyleId },
     ) {
-      return actions
-        .INSTANTIATE_ENGINE_CONNECTOR({
+      try {
+        const instance = await actions.INSTANTIATE_ENGINE_CONNECTOR({
           engineId,
-        })
-        .then(async (instance) =>
-          convertAudioQueryFromEngineToEditor(
-            await instance.invoke("audioQuery")({
-              text,
-              speaker: styleId,
-              enableKatakanaEnglish:
-                state.engineManifests[engineId].supportedFeatures
-                  .applyKatakanaEnglish && state.enableKatakanaEnglish,
-            }),
-          ),
-        )
-        .catch((error) => {
-          window.backend.logError(
-            error,
-            `Failed to fetch AudioQuery for the text "${text}".`,
-          );
-          throw error;
         });
+
+        // 1. VOICEVOX Engine から AudioQuery を取得
+        const originalQuery = await instance.invoke("audioQuery")({
+          text,
+          speaker: styleId,
+          enableKatakanaEnglish:
+            state.engineManifests[engineId].supportedFeatures
+              .applyKatakanaEnglish && state.enableKatakanaEnglish,
+        });
+
+        // 2. 拡張辞書を適用（サーバーが落ちていてもフォールバック）
+        // Note: Editor内部(camelCase)とServer API(snake_case)で型が異なるため変換が必要
+        try {
+          const queryForServer = AudioQueryToJSON(originalQuery);
+          const result = await extendedDictApi.applyDictionary(
+            queryForServer as unknown as AudioQueryForDict,
+            text,
+            styleId,
+          );
+          if (result.matches_found > 0) {
+            console.log(
+              `Extended dictionary applied: ${result.applied_entries.join(", ")}`,
+            );
+          }
+          // サーバーレスポンス(snake_case)をEditor形式(camelCase)に変換
+          const convertedQuery = AudioQueryFromJSON(result.audio_query);
+          return convertAudioQueryFromEngineToEditor(convertedQuery);
+        } catch {
+          // 拡張辞書サーバーが利用できない場合は元のQueryを使用
+          console.warn("Extended dictionary not available, using original query");
+          return convertAudioQueryFromEngineToEditor(originalQuery);
+        }
+      } catch (error) {
+        window.backend.logError(
+          error,
+          `Failed to fetch AudioQuery for the text "${text}".`,
+        );
+        throw error;
+      }
     },
   },
 
@@ -2004,6 +2037,37 @@ export const audioCommandStore = transformCommandStore(
                 newAccentPhrases = mergedDiff;
               }
             }
+
+            // 拡張辞書を適用（サーバーが落ちていてもフォールバック）
+            // Note: Editor内部(camelCase)とServer API(snake_case)で型が異なるため as unknown as で変換
+            try {
+              const tempQuery = { ...query, accentPhrases: newAccentPhrases };
+              const queryForServer = AudioQueryToJSON(
+                tempQuery as unknown as AudioQuery,
+              );
+              const result = await extendedDictApi.applyDictionary(
+                queryForServer as unknown as AudioQueryForDict,
+                skippedText,
+                styleId,
+              );
+              if (result.matches_found > 0) {
+                console.log(
+                  `Extended dictionary applied: ${result.applied_entries.join(", ")}`,
+                );
+                // サーバーレスポンス(snake_case)をEditor形式(camelCase)に変換
+                const serverResponse = result.audio_query as unknown as {
+                  accent_phrases: unknown[];
+                };
+                newAccentPhrases = serverResponse.accent_phrases.map(
+                  (ap) => AccentPhraseFromJSON(ap) as AccentPhrase,
+                );
+              }
+            } catch {
+              console.warn(
+                "Extended dictionary not available, using original accent phrases",
+              );
+            }
+
             mutations.COMMAND_CHANGE_AUDIO_TEXT({
               audioKey,
               text,
