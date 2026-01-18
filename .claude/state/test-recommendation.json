@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-01-17T10:36:19Z",
-  "changed_file": "tests/unit/components/Dialog/ExtendedDictionaryDialog.spec.ts",
+  "timestamp": "2026-01-18T06:51:43Z",
+  "changed_file": "src/infrastructures/extendedDictApi.ts",
   "test_command": "pytest",
   "related_test": "",
   "recommendation": "テストの実行を推奨します"
